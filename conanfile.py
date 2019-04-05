@@ -48,7 +48,7 @@ class GStreamerPluginsGoodConan(ConanFile):
         args.append("-Dpng=" + ("enabled" if self.options.png else "disabled"))
         args.append("-Disomp4=" + ("enabled" if self.options.isomp4 else "disabled"))
         args.append("-Dvideofilter=" + ("enabled" if self.options.videofilter else "disabled"))
-        args.append("-Dmultifile=" + ("enabled" if self.options.videofilter else "disabled"))
+        args.append("-Dmultifile=" + ("enabled" if self.options.multifile else "disabled"))
         meson = Meson(self)
         meson.configure(source_folder=self.folder_name, args=args, pkg_config_paths=os.environ["PKG_CONFIG_PATH"].split(":"))
         meson.build()
