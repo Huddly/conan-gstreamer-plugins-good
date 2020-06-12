@@ -7,6 +7,7 @@ class GStreamerPluginsGoodConan(ConanFile):
     name = "gst-plugins-good"
     version = "1.16.1"
     default_user = "bincrafters"
+    generators = "pkg_config"
     default_channel = "stable"
     url = "https://github.com/bincrafters/conan-" + name
     description = "Plug-ins is a set of plugins that we consider to have good quality code and correct functionality"
