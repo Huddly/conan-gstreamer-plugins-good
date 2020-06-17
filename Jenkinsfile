@@ -7,7 +7,7 @@ String cron_string = BRANCH_NAME == "master" ? "H H 1 * *" : "" // Run once a mo
 
 def PROFILES=['x86_64-linux-gcc-7']
 def PACKAGE=[
-    'name' : 'gstreamer-plugins-good',
+    'name' : 'gst-plugins-good',
     'channel_latest': 'latest',
     'channel_stable': 'stable',
     'user': 'huddly',
