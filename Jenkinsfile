@@ -11,7 +11,10 @@ def PACKAGE=[
     'channel_latest': 'latest',
     'channel_stable': 'stable',
     'user': 'huddly',
-    'version': ''
+    'version': '',
+    'options' : [	
+	    'with_libalsa' : 'False'
+	    ],
 ]
 
 def profileMap = PROFILES.collectEntries {
@@ -21,13 +24,21 @@ def profileMap = PROFILES.collectEntries {
 def generatePackageStages(pkg, profile)
 {
   return {
+    def options=""
+    if (pkg.options != null)
+    {
+       pkg.options.each { option ,value ->
+          options="${options} -o ${pkg.name}:${option}=${value}"
+       }
+    }
+	 
     stage("build ${pkg.name}") {
       script {
         conan.install([
           reference: "${pkg.name}/$VERSION@${pkg.user}/${pkg.channel_latest}",
           profile: "$profile",
           remote: "$VIRTUAL_REMOTE",
-          extraArgs: "--build ${pkg.name}",
+          extraArgs: "--build ${pkg.name} $options",
           cmdLabel: "building ${pkg.name} for profile $profile"
         ])
       }
