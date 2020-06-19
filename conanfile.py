@@ -43,9 +43,9 @@ class GStreamerPluginsGoodConan(ConanFile):
         return self.settings.compiler == "Visual Studio"
 
     def requirements(self):
-        self.requires("glib/2.64.0@%s/%s" % (self.user, self.channel))
-        self.requires("gstreamer/[>=1.16.0]@%s/%s" % (self.user, self.channel))
-        self.requires("gst-plugins-base/[>=1.16.0]@%s/%s" % (self.user, self.channel))
+        self.requires("glib/2.64.0@bincrafters/stable")
+        self.requires("gstreamer/[>=1.16.0]@bincrafters/stable")
+        self.requires("gst-plugins-base/[>=1.16.0]@bincrafters/stable")
 
     def build_requirements(self):
         self.build_requires("meson/0.54.2")
