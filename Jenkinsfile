@@ -13,8 +13,8 @@ def PACKAGE=[
     'user': 'huddly',
     'version': '',
     'options' : [	
-	    'with_libalsa' : 'False'
-	    ],
+	    'gst-plugins-base:with_libalsa': 'False'
+	  ],
 ]
 
 def profileMap = PROFILES.collectEntries {
@@ -28,7 +28,7 @@ def generatePackageStages(pkg, profile)
     if (pkg.options != null)
     {
        pkg.options.each { option ,value ->
-          options="${options} -o ${pkg.name}:${option}=${value}"
+          options="${options} -o ${option}=${value}"
        }
     }
 	 
