@@ -90,15 +90,8 @@ pipeline {
     }
 
     stage ('upload') {
-      when {
-        anyOf {
-          branch 'master'
-          buildingTag()
-        }
-      }
       parallel {
         stage ("Latest release") {
-          when { branch 'master' }
           steps {
             echo "Running on $NODE_NAME"
             script {
@@ -112,7 +105,6 @@ pipeline {
           }
         }
         stage ("Stable release") {
-          when { buildingTag() }
           steps {
             echo "Running on $NODE_NAME"
             script {
