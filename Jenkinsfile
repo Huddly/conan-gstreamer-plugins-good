@@ -20,7 +20,6 @@ pipeline {
     CONAN_PROFILE_X86='x86_64-linux-gcc-7'
     ARTIFACTORY_ACCESS_TOKEN=credentials('artifactory-access-token')
     ARTIFACTORY_USER="jenkins"
-    BUILD_OPTIONS='-o gst-plugins-base:with_libalsa=False -o glib:with_selinux=False -o glib:with_elf=False'
   }
   triggers { cron(cron_string) }
   stages {
@@ -47,14 +46,14 @@ pipeline {
           conan install $REF \
           -r $VIRTUAL_REMOTE \
           -pr:b x86_64-linux-gcc-7 -pr:h aarch64-buildroot-musl-gcc9 \
-          --build $MODULE $BUILD_OPTIONS""", label: "Build $MODULE for profile aarch64-buildroot-musl-gcc9"
+          --build $MODULE""", label: "Build $MODULE for profile aarch64-buildroot-musl-gcc9"
 
           // Build for x86_64-linux-gcc-7
           conan.install([
             reference: "$REF",
             profile: "$CONAN_PROFILE_X86",
             remote: "$VIRTUAL_REMOTE",
-            extraArgs: "--build $MODULE $BUILD_OPTIONS",
+            extraArgs: "--build $MODULE",
             cmdLabel: "Build $MODULE for profile x86_64-linux-gcc-7"
           ])
         }

@@ -22,6 +22,9 @@ class GStreamerPluginsGoodConan(ConanFile):
         "isomp4": [True, False],
         "videofilter": [True, False],
         "multifile": [True, False],
+        "with_libalsa": [True, False],
+        "with_selinux": [True, False],
+        "with_elf": [True, False]
     }
     default_options = (
         "shared=True",
@@ -32,6 +35,9 @@ class GStreamerPluginsGoodConan(ConanFile):
         "isomp4=True",
         "videofilter=True",
         "multifile=True",
+        "with_libalsa=False",
+        "with_selinux=False",
+        "with_elf=False"
     )
     folder_name = "gst-plugins-good-" + version
 
@@ -48,7 +54,6 @@ class GStreamerPluginsGoodConan(ConanFile):
         self.requires("gst-plugins-base/[>=1.16.0]@bincrafters/stable")
 
     def build_requirements(self):
-        self.build_requires("ninja/1.10.0")
         self.build_requires("meson/0.54.2")
         if not tools.which("pkg-config"):
             self.build_requires("pkg-config_installer/0.29.2@bincrafters/stable")
@@ -73,6 +78,11 @@ class GStreamerPluginsGoodConan(ConanFile):
             shutil.copy(pc_name, new_pc)
             prefix = tools.unix_path(root) if self.settings.os == 'Windows' else root
             tools.replace_prefix_in_pc_file(new_pc, prefix)
+
+    def configure(self):
+        self.options['gst-plugins-base'].with_libalsa = self.options.with_libalsa
+        self.options['glib'].with_selinux = self.options.with_selinux
+        self.options['glib'].with_elf = self.options.with_elf
 
     def _configure_meson(self):
         defs = dict()
@@ -116,7 +126,7 @@ class GStreamerPluginsGoodConan(ConanFile):
                     filename_new = filename_old[3:-2] + ".lib"
                     self.output.info("rename %s into %s" % (filename_old, filename_new))
                     shutil.move(filename_old, filename_new)
-    
+
     def build(self):
         args = ["--auto-features=disabled"]
         args.append("-Dautodetect=" + ("enabled" if self.options.autodetect else "disabled"))
