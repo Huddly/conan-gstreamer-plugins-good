@@ -69,12 +69,18 @@ pipeline {
       when {
         anyOf {
           branch 'master'
+	        branch 'stable/1.16.1'
           buildingTag()
         }
       }
       parallel {
         stage ("Latest release") {
-          when { branch 'master' }
+          when {
+	          anyOf {
+              branch 'master'
+              branch 'stable/1.16.1'
+            }
+          }
           steps {
             script {
               conan.upload reference: "$MODULE/$VERSION@$USER/$CHAN_LATEST", remote: "$LOCAL_REMOTE", extraArgs: "--all"
