@@ -16,6 +16,7 @@ pipeline {
     USER= 'huddly'
     CHAN_LATEST='latest'
     CHAN_STABLE='stable'
+    CONAN_PROFILE='aarch64-buildroot-musl-gcc9'
     CONAN_PROFILE_X86='x86_64-linux-gcc-7'
     ARTIFACTORY_ACCESS_TOKEN=credentials('artifactory-access-token')
     ARTIFACTORY_USER="jenkins"
@@ -40,6 +41,15 @@ pipeline {
         script {
           def REF = "$MODULE/$VERSION@$USER/$CHAN_LATEST"
           conan.export path: "$SRC", reference: "$REF"
+
+          // Build for aarch64-buildroot-musl-gcc9
+          sh script: """
+          conan install $REF \
+          -r $VIRTUAL_REMOTE \
+          -pr:b x86_64-linux-gcc-7 -pr:h aarch64-buildroot-musl-gcc9 \
+          --build $MODULE $BUILD_OPTIONS""", label: "Build $MODULE for profile aarch64-buildroot-musl-gcc9"
+
+          // Build for x86_64-linux-gcc-7
           conan.install([
             reference: "$REF",
             profile: "$CONAN_PROFILE_X86",
