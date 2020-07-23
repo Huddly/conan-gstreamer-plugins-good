@@ -48,12 +48,13 @@ class GStreamerPluginsGoodConan(ConanFile):
         self.requires("gst-plugins-base/[>=1.16.0]@bincrafters/stable")
 
     def build_requirements(self):
+        self.build_requires("ninja/1.10.0")
         self.build_requires("meson/0.54.2")
         if not tools.which("pkg-config"):
             self.build_requires("pkg-config_installer/0.29.2@bincrafters/stable")
         self.build_requires("bison/3.5.3")
-        self.build_requires("flex/2.6.4")    
-    
+        self.build_requires("flex/2.6.4")
+
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
     #    tools.get("https://github.com/GStreamer/gst-plugins-good/archive/%s.tar.gz" % self.version)
