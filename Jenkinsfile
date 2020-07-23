@@ -5,68 +5,28 @@ Map stage_node_info = [:]
 String slack_channel = BRANCH_NAME == "master" ? "#builds-falcon" : ""
 String cron_string = BRANCH_NAME == "master" ? "H H 1 * *" : "" // Run once a month (1st day of the month)
 
-def PROFILES=['x86_64-linux-gcc-7']
-def PACKAGE=[
-    'name' : 'gst-plugins-good',
-    'channel_latest': 'latest',
-    'channel_stable': 'stable',
-    'user': 'huddly',
-    'version': '',
-    'options' : [	
-	    'gst-plugins-base:with_libalsa': 'False'
-	  ],
-]
-
-def profileMap = PROFILES.collectEntries {
-   ["${it}" : generatePackageStages(PACKAGE, "${it}")]
-}
-
-def generatePackageStages(pkg, profile)
-{
-  return {
-    def options=""
-    if (pkg.options != null)
-    {
-       pkg.options.each { option ,value ->
-          options="${options} -o ${option}=${value}"
-       }
-    }
-	 
-    stage("build ${pkg.name}") {
-      script {
-        conan.install([
-          reference: "${pkg.name}/$VERSION@${pkg.user}/${pkg.channel_latest}",
-          profile: "$profile",
-          remote: "$VIRTUAL_REMOTE",
-          extraArgs: "--build ${pkg.name} $options",
-          cmdLabel: "building ${pkg.name} for profile $profile"
-        ])
-      }
-    }
-  }
-}
-
 pipeline {
   agent { docker huddlydocker([configKey: "falcon_build"]) }
   environment {
     CONAN_USER_HOME = "${env.WORKSPACE}"
     LOCAL_REMOTE='conan-ext_deps-local'
     VIRTUAL_REMOTE='conan'
-    SRC="."
+    SRC='.'
+    MODULE='gst-plugins-good'
+    USER= 'huddly'
+    CHAN_LATEST='latest'
+    CHAN_STABLE='stable'
+    CONAN_PROFILE_X86='x86_64-linux-gcc-7'
     ARTIFACTORY_ACCESS_TOKEN=credentials('artifactory-access-token')
     ARTIFACTORY_USER="jenkins"
+    BUILD_OPTIONS='-o gst-plugins-base:with_libalsa=False -o glib:with_selinux=False -o glib:with_elf=False'
   }
   triggers { cron(cron_string) }
   stages {
-    stage ('setup') {
+    stage('setup') {
       steps {
         echo "Running on $NODE_NAME"
-        script {
-          conan.configure user: "$ARTIFACTORY_USER", password: "$ARTIFACTORY_ACCESS_TOKEN"
-          VERSION = conan.inspect path: "$SRC", attribute: "version"
-          PACKAGE.version = VERSION
-        }
-        echo "VERSION is ${VERSION}"
+        conan_config()
       }
       post {
         always {
@@ -78,8 +38,15 @@ pipeline {
       steps {
         echo "Running on $NODE_NAME"
         script {
-          conan.export path: "$SRC", reference: "${PACKAGE.name}/$VERSION@$PACKAGE.user/$PACKAGE.channel_latest"
-          parallel profileMap
+          def REF = "$MODULE/$VERSION@$USER/$CHAN_LATEST"
+          conan.export path: "$SRC", reference: "$REF"
+          conan.install([
+            reference: "$REF",
+            profile: "$CONAN_PROFILE_X86",
+            remote: "$VIRTUAL_REMOTE",
+            extraArgs: "--build $MODULE $BUILD_OPTIONS",
+            cmdLabel: "Build $MODULE for profile x86_64-linux-gcc-7"
+          ])
         }
       }
       post {
@@ -90,12 +57,18 @@ pipeline {
     }
 
     stage ('upload') {
+      when {
+        anyOf {
+          branch 'master'
+          buildingTag()
+        }
+      }
       parallel {
         stage ("Latest release") {
+          when { branch 'master' }
           steps {
-            echo "Running on $NODE_NAME"
             script {
-              conan.upload reference: "${PACKAGE.name}/${PACKAGE.version}@${PACKAGE.user}/${PACKAGE.channel_latest}", remote: "$LOCAL_REMOTE", extraArgs: "--all"
+              conan.upload reference: "$MODULE/$VERSION@$USER/$CHAN_LATEST", remote: "$LOCAL_REMOTE", extraArgs: "--all"
             }
           }
           post {
@@ -105,12 +78,12 @@ pipeline {
           }
         }
         stage ("Stable release") {
+          when { buildingTag() }
           steps {
             echo "Running on $NODE_NAME"
             script {
-              STABLE_USERCHAN = "${PACKAGE.user}/${PACKAGE.channel_stable}"
-              conan.copy reference: "${PACKAGE.name}/$VERSION@${PACKAGE.user}/${PACKAGE.channel_latest}", userChannel: "$STABLE_USERCHAN", extraArgs: "--all"
-              conan.upload reference: "${PACKAGE.name}/${PACKAGE.version}@$STABLE_USERCHAN", remote: "$LOCAL_REMOTE", extraArgs: "--all"
+              conan.copy reference: "$MODULE/$VERSION@$USER/$CHAN_LATEST", userChannel: "$USER/$CHAN_STABLE", extraArgs: "--all"
+              conan.upload reference: "$MODULE/$VERSION@$USER/$CHAN_STABLE", remote: "$LOCAL_REMOTE", extraArgs: "--all"
             }
           }
           post {
@@ -133,3 +106,12 @@ pipeline {
   }
 }
 
+def conan_config() {
+  script {
+    sh script: 'git clean -x -f', label: 'Cleanup old generated files'
+    falcon_pylib.install_libraries()
+    conan.configure user: "$ARTIFACTORY_USER", password: "$ARTIFACTORY_ACCESS_TOKEN"
+    VERSION = conan.inspect path: "$SRC", attribute: "version"
+    print("VERSION: $VERSION")
+  }
+}
