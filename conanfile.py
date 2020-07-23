@@ -83,6 +83,10 @@ class GStreamerPluginsGoodConan(ConanFile):
         self.options['gst-plugins-base'].with_libalsa = self.options.with_libalsa
         self.options['glib'].with_selinux = self.options.with_selinux
         self.options['glib'].with_elf = self.options.with_elf
+        print(100*'-')
+        print(f"with_libalsa = {self.options.with_libalsa}\nwith_selinux = {self.options.with_selinux}\nwith_elf = {self.options.with_elf}")
+        print(100*'-')
+
 
     def _configure_meson(self):
         defs = dict()
