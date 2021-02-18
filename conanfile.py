@@ -5,10 +5,7 @@ import os
 
 class GStreamerPluginsGoodConan(ConanFile):
     name = "gst-plugins-good"
-    #version = "1.16.1"
-    #default_user = "bincrafters"
     generators = "pkg_config","virtualenv"
-    #default_channel = "stable"
     url = "https://github.com/bincrafters/conan-" + name
     description = "Plug-ins is a set of plugins that we consider to have good quality code and correct functionality"
     license = "https://gitlab.freedesktop.org/gstreamer/gstreamer/raw/master/COPYING"
@@ -39,32 +36,53 @@ class GStreamerPluginsGoodConan(ConanFile):
         "with_selinux=False",
         "with_elf=True"
     )
-    #folder_name = "gst-plugins-good-" + version
-
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
+
+    requires = (
+        "gstreamer/[>=1.18.0]",
+        "gst-plugins-base/[>=1.8.3]",
+    )
 
     @property
     def _is_msvc(self):
         return self.settings.compiler == "Visual Studio"
 
+    def configure(self):
+        del self.settings.compiler.libcxx
+        del self.settings.compiler.cppstd
+        self.options['gstreamer'].shared = self.options.shared
+        self.options['gst-plugins-base'].shared = self.options.shared
+        if tools.Version(self.version) >= "1.18.2" and\
+           self.settings.compiler == "gcc" and\
+           tools.Version(self.settings.compiler.version) < "5":
+            raise ConanInvalidConfiguration(
+                "gst-plugins-good %s does not support gcc older than 5" % self.version
+            )
+
+    def config_options(self):
+        if self.settings.os == 'Windows':
+            del self.options.fPIC
+        if self.settings.os != "Linux":
+            del self.options.with_libalsa
+
     def requirements(self):
-        #self.requires("glib/2.64.0@bincrafters/stable")
-        #self.requires("gstreamer/[>=1.16.0]@bincrafters/stable")
-        self.requires("gst-plugins-base/[>=1.18.0]")
+        if self.settings.os == "Linux":
+            if self.options.with_libalsa:
+                self.requires("libalsa/1.1.9")
 
     def build_requirements(self):
         self.build_requires("meson/0.56.2")
-        #if not tools.which("pkg-config"):
-        #    self.build_requires("pkg-config_installer/0.29.2@bincrafters/stable")
-        self.build_requires("bison/3.5.3")
-        self.build_requires("flex/2.6.4")
-        #self.build_requires("glib/2.64.0@bincrafters/stable")
+        self.build_requires("pkgconf/1.7.3")
+
+        if self.settings.os == 'Windows':
+            self.build_requires("winflexbison/2.5.22")
+        else:
+            self.build_requires("bison/3.5.3")
+            self.build_requires("flex/2.6.4")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
-    #    tools.get("https://github.com/GStreamer/gst-plugins-good/archive/%s.tar.gz" % self.version)
-        #gst-plugins-base-1.16.1
         os.rename("%s-%s" % (self.name, self.version), self._source_subfolder)
 
     def _copy_pkg_config(self, name):
@@ -80,13 +98,13 @@ class GStreamerPluginsGoodConan(ConanFile):
             prefix = tools.unix_path(root) if self.settings.os == 'Windows' else root
             tools.replace_prefix_in_pc_file(new_pc, prefix)
 
-    def configure(self):
-        self.options['gst-plugins-base'].with_libalsa = self.options.with_libalsa
-        self.options['glib'].with_selinux = self.options.with_selinux
-        self.options['glib'].with_elf = self.options.with_elf
-        print(100*'-')
-        print(f"with_libalsa = {self.options.with_libalsa}\nwith_selinux = {self.options.with_selinux}\nwith_elf = {self.options.with_elf}")
-        print(100*'-')
+    #def configure(self):
+    #    self.options['gst-plugins-base'].with_libalsa = self.options.with_libalsa
+    #    self.options['glib'].with_selinux = self.options.with_selinux
+    #    self.options['glib'].with_elf = self.options.with_elf
+    #    print(100*'-')
+    #    print(f"with_libalsa = {self.options.with_libalsa}\nwith_selinux = {self.options.with_selinux}\nwith_elf = {self.options.with_elf}")
+    #    print(100*'-')
 
 
     def _configure_meson(self,args):
@@ -154,9 +172,6 @@ class GStreamerPluginsGoodConan(ConanFile):
         with tools.environment_append(VisualStudioBuildEnvironment(self).vars) if self._is_msvc else tools.no_op():
             meson = self._configure_meson(args=args)
             meson.build()
-    #    meson.configure(source_folder=self.folder_name, args=args)
-        #meson.build()
-        #meson.install()
 
     def package(self):
         self.copy(pattern="LICENSE", dst="licenses", src=self._source_subfolder)
@@ -237,9 +252,3 @@ class GStreamerPluginsGoodConan(ConanFile):
         "libgstreplaygain",
         "libgstvideocrop",
         ])
-
-
-        #self.cpp_info.srcdirs.append("src")
-        #self.env_info.GST_PLUGIN_PATH.append(os.path.join(self.package_folder, "lib", "gstreamer-1.0"))
-        #self.env_info.PKG_CONFIG_PATH.append(os.path.join(self.package_folder, "lib", "pkgconfig"))
-        #self.env_info.SOURCE_PATH.append(os.path.join(self.package_folder, "src"))
