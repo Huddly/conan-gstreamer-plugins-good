@@ -14,7 +14,7 @@ pipeline {
     VIRTUAL_REMOTE='conan'
     SRC='.'
     MODULE='gst-plugins-good'
-    OPTIONS=' -o glib:with_selinux=False '
+    OPTIONS=' -o glib:with_selinux=False -o gst-plugins-good:with_libalsa=False -o gst-plugins-base:with_libalsa=False '
     VERSION='1.18.3'
     CHAN_STABLE='stable'
     CONAN_PROFILE='aarch64-buildroot-musl-gcc9'
@@ -47,6 +47,7 @@ pipeline {
           conan install $REF \
           -r $VIRTUAL_REMOTE \
           -pr:b x86_64-linux-gcc-7 -pr:h aarch64-buildroot-musl-gcc9 \
+	  $OPTIONS \
           --build $MODULE""", label: "Build $MODULE for profile aarch64-buildroot-musl-gcc9"
 
           // Build for x86_64-linux-gcc-7
@@ -86,7 +87,7 @@ pipeline {
           }
           steps {
             script {
-              conan.upload reference: "$MODULE/$VERSION@$USER/$CHAN_LATEST", remote: "$LOCAL_REMOTE", extraArgs: "--all"
+              conan.upload reference: "$MODULE/$VERSION@", remote: "$LOCAL_REMOTE", extraArgs: "--all"
             }
           }
           post {
@@ -99,10 +100,10 @@ pipeline {
           when { buildingTag() }
           steps {
             echo "Running on $NODE_NAME"
-            script {
-              conan.copy reference: "$MODULE/$VERSION@$USER/$CHAN_LATEST", userChannel: "$USER/$CHAN_STABLE", extraArgs: "--all"
-              conan.upload reference: "$MODULE/$VERSION@$USER/$CHAN_STABLE", remote: "$LOCAL_REMOTE", extraArgs: "--all"
-            }
+            /*script {
+              //conan.copy reference: "$MODULE/$VERSION@", userChannel: "$USER/$CHAN_STABLE", extraArgs: "--all"
+              //conan.upload reference: "$MODULE/$VERSION@", remote: "$LOCAL_REMOTE", extraArgs: "--all"
+            }*/
           }
           post {
             always {
