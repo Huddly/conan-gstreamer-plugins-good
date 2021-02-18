@@ -13,8 +13,9 @@ pipeline {
     VIRTUAL_REMOTE='conan'
     SRC='.'
     MODULE='gst-plugins-good'
-    USER= 'huddly'
-    CHAN_LATEST='latest'
+    //USER= 'huddly'
+    //CHAN_LATEST='latest'
+    VERSION='1.18.3'
     CHAN_STABLE='stable'
     CONAN_PROFILE='aarch64-buildroot-musl-gcc9'
     CONAN_PROFILE_X86='x86_64-linux-gcc-7'
@@ -38,7 +39,7 @@ pipeline {
       steps {
         echo "Running on $NODE_NAME"
         script {
-          def REF = "$MODULE/$VERSION@$USER/$CHAN_LATEST"
+          def REF = "$MODULE/$VERSION@" //$USER/$CHAN_LATEST"
           conan.export path: "$SRC", reference: "$REF"
 
           // Build for aarch64-buildroot-musl-gcc9
@@ -68,6 +69,7 @@ pipeline {
     stage ('upload') {
       when {
         anyOf {
+          branch 'main'
           branch 'master'
 	        branch 'stable/1.16.1'
           buildingTag()
@@ -77,7 +79,8 @@ pipeline {
         stage ("Latest release") {
           when {
 	          anyOf {
-              branch 'master'
+              branch 'main'
+	            branch 'master'
               branch 'stable/1.16.1'
             }
           }
@@ -126,7 +129,7 @@ def conan_config() {
     sh script: 'git clean -x -f', label: 'Cleanup old generated files'
     falcon_pylib.install_libraries()
     conan.configure user: "$ARTIFACTORY_USER", password: "$ARTIFACTORY_ACCESS_TOKEN"
-    VERSION = conan.inspect path: "$SRC", attribute: "version"
-    print("VERSION: $VERSION")
+    //VERSION = conan.inspect path: "$SRC", attribute: "version"
+    //print("VERSION: $VERSION")
   }
 }

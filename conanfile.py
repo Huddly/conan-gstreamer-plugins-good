@@ -5,10 +5,10 @@ import os
 
 class GStreamerPluginsGoodConan(ConanFile):
     name = "gst-plugins-good"
-    version = "1.16.1"
-    default_user = "bincrafters"
+    #version = "1.16.1"
+    #default_user = "bincrafters"
     generators = "pkg_config","virtualenv"
-    default_channel = "stable"
+    #default_channel = "stable"
     url = "https://github.com/bincrafters/conan-" + name
     description = "Plug-ins is a set of plugins that we consider to have good quality code and correct functionality"
     license = "https://gitlab.freedesktop.org/gstreamer/gstreamer/raw/master/COPYING"
@@ -37,9 +37,9 @@ class GStreamerPluginsGoodConan(ConanFile):
         "multifile=False",
         "with_libalsa=False",
         "with_selinux=False",
-        "with_elf=False"
+        "with_elf=True"
     )
-    folder_name = "gst-plugins-good-" + version
+    #folder_name = "gst-plugins-good-" + version
 
     _source_subfolder = "source_subfolder"
     _build_subfolder = "build_subfolder"
@@ -49,14 +49,14 @@ class GStreamerPluginsGoodConan(ConanFile):
         return self.settings.compiler == "Visual Studio"
 
     def requirements(self):
-        self.requires("glib/2.64.0@bincrafters/stable")
-        self.requires("gstreamer/[>=1.16.0]@bincrafters/stable")
-        self.requires("gst-plugins-base/[>=1.16.0]@bincrafters/stable")
+        #self.requires("glib/2.64.0@bincrafters/stable")
+        #self.requires("gstreamer/[>=1.16.0]@bincrafters/stable")
+        self.requires("gst-plugins-base/[>=1.18.0]")
 
     def build_requirements(self):
-        self.build_requires("meson/0.54.2")
-        if not tools.which("pkg-config"):
-            self.build_requires("pkg-config_installer/0.29.2@bincrafters/stable")
+        self.build_requires("meson/0.56.2")
+        #if not tools.which("pkg-config"):
+        #    self.build_requires("pkg-config_installer/0.29.2@bincrafters/stable")
         self.build_requires("bison/3.5.3")
         self.build_requires("flex/2.6.4")
         #self.build_requires("glib/2.64.0@bincrafters/stable")
