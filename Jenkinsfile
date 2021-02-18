@@ -14,8 +14,7 @@ pipeline {
     VIRTUAL_REMOTE='conan'
     SRC='.'
     MODULE='gst-plugins-good'
-    //USER= 'huddly'
-    //CHAN_LATEST='latest'
+    OPTIONS=' -o glib:with_selinux=False '
     VERSION='1.18.3'
     CHAN_STABLE='stable'
     CONAN_PROFILE='aarch64-buildroot-musl-gcc9'
@@ -55,7 +54,7 @@ pipeline {
             reference: "$REF",
             profile: "$CONAN_PROFILE_X86",
             remote: "$VIRTUAL_REMOTE",
-            extraArgs: "--build $MODULE",
+            extraArgs: "$OPTIONS --build $MODULE",
             cmdLabel: "Build $MODULE for profile x86_64-linux-gcc-7"
           ])
         }
