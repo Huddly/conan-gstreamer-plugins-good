@@ -4,9 +4,10 @@
 Map stage_node_info = [:]
 String slack_channel = BRANCH_NAME == "master" ? "#builds-falcon" : ""
 String cron_string = BRANCH_NAME == "master" ? "H H 1 * *" : "" // Run once a month (1st day of the month)
+DOCKER_BUILD_IMAGE = 'ace-docker-prod-local/ubuntu2004_build:1.1.1'
 
 pipeline {
-  agent { docker huddlydocker([configKey: "falcon_build"]) }
+  agent { docker huddlydocker([overrideImage: "$DOCKER_BUILD_IMAGE"]) }
   environment {
     CONAN_USER_HOME = "${env.WORKSPACE}"
     LOCAL_REMOTE='conan-ext_deps-local'
